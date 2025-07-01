@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,34 +38,39 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         
-        // Fetch recent expenses
-        const expensesResponse = await expenseService.getExpenses({ limit: 4 });
-        const recentExpenses = expensesResponse.data || [];
+        // Fetch recent expenses using getAll method
+        const expenses = await expenseService.getAll();
+        const recentExpenses = Array.isArray(expenses) ? expenses.slice(0, 4) : [];
         
-        // Fetch budget data
-        const budgetResponse = await budgetService.getBudgets();
-        const budgets = budgetResponse.data || [];
-        const currentBudget = budgets.find(b => {
-          const budgetMonth = new Date(b.period_start).getMonth();
+        // Fetch budget data using getAll method
+        const budgets = await budgetService.getAll();
+        const budgetList = Array.isArray(budgets) ? budgets : [];
+        const currentBudget = budgetList.find(b => {
+          const budgetMonth = new Date(b.start_date).getMonth();
           const currentMonthNum = new Date().getMonth();
           return budgetMonth === currentMonthNum;
         });
         
-        // Calculate totals
-        const totalExpenses = recentExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const monthlyBudget = currentBudget?.amount || 0;
+        // Calculate totals - ensure we're working with numbers
+        const totalExpenses = recentExpenses.reduce((sum, expense) => {
+          const amount = typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount) || 0;
+          return sum + amount;
+        }, 0);
+        
+        const monthlyBudget = currentBudget ? (typeof currentBudget.amount === 'number' ? currentBudget.amount : parseFloat(currentBudget.amount) || 0) : 0;
         
         // Calculate category totals
         const categoryTotals = {};
         recentExpenses.forEach(expense => {
           const categoryName = expense.category?.name || 'Uncategorized';
-          categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + expense.amount;
+          const amount = typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount) || 0;
+          categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + amount;
         });
         
         const topCategories = Object.entries(categoryTotals)
           .map(([name, amount]) => ({
             name,
-            amount,
+            amount: typeof amount === 'number' ? amount : 0,
             color: getCategoryColor(name),
             percentage: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0
           }))
@@ -82,7 +86,7 @@ const Dashboard = () => {
           recentExpenses: recentExpenses.map(expense => ({
             id: expense.id,
             description: expense.description,
-            amount: expense.amount,
+            amount: typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount) || 0,
             category: expense.category?.name || 'Uncategorized',
             date: new Date(expense.date).toLocaleDateString(),
             color: getCategoryColor(expense.category?.name || 'Uncategorized')
@@ -91,6 +95,15 @@ const Dashboard = () => {
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast.error('Failed to load dashboard data');
+        // Set empty data on error
+        setDashboardData({
+          totalExpenses: 0,
+          monthlyBudget: 0,
+          expensesThisMonth: 0,
+          lastMonthComparison: 0,
+          topCategories: [],
+          recentExpenses: []
+        });
       } finally {
         setIsLoading(false);
       }

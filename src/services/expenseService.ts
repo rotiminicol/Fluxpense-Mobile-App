@@ -9,6 +9,12 @@ export interface Expense {
   receipt_url?: string;
   user_id?: number;
   category_id: number;
+  category?: {
+    id: number;
+    name: string;
+    color: string;
+    icon: string;
+  };
   created_at?: string;
 }
 

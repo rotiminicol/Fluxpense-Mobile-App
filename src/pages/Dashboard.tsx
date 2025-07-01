@@ -60,7 +60,7 @@ const Dashboard = () => {
         const monthlyBudget = currentBudget ? (typeof currentBudget.amount === 'number' ? currentBudget.amount : parseFloat(currentBudget.amount) || 0) : 0;
         
         // Calculate category totals
-        const categoryTotals = {};
+        const categoryTotals: { [key: string]: number } = {};
         recentExpenses.forEach(expense => {
           const categoryName = expense.category?.name || 'Uncategorized';
           const amount = typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount) || 0;
@@ -72,7 +72,7 @@ const Dashboard = () => {
             name,
             amount: typeof amount === 'number' ? amount : 0,
             color: getCategoryColor(name),
-            percentage: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0
+            percentage: totalExpenses > 0 ? Math.round((Number(amount) / totalExpenses) * 100) : 0
           }))
           .sort((a, b) => b.amount - a.amount)
           .slice(0, 4);

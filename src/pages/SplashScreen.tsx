@@ -1,17 +1,23 @@
 
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const SplashScreen = () => {
   const navigate = useNavigate();
+  const [showContinue, setShowContinue] = useState(false);
 
-  useEffect(() => {
+  // Show continue button after 2 seconds for better UX
+  useState(() => {
     const timer = setTimeout(() => {
-      navigate('/welcome');
-    }, 3000);
-
+      setShowContinue(true);
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  });
+
+  const handleContinue = () => {
+    navigate('/welcome');
+  };
 
   return (
     <div className="min-h-screen bg-flux-gradient flex items-center justify-center relative overflow-hidden">
@@ -48,13 +54,22 @@ const SplashScreen = () => {
           FluxPense
         </h1>
         
-        <p className="text-white/80 text-lg font-light">
+        <p className="text-white/80 text-lg font-light mb-8">
           Smart Expense Management
         </p>
         
-        {/* Loading indicator */}
+        {/* Continue button or loading indicator */}
         <div className="mt-12">
-          <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
+          {showContinue ? (
+            <Button 
+              onClick={handleContinue}
+              className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-8 py-3 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            >
+              Continue
+            </Button>
+          ) : (
+            <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
+          )}
         </div>
       </div>
     </div>

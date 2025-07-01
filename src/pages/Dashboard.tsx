@@ -35,42 +35,77 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
+        console.log('Fetching dashboard data...');
         setIsLoading(true);
         
-        // Fetch recent expenses using getAll method
-        const expenses = await expenseService.getAll();
-        const recentExpenses = Array.isArray(expenses) ? expenses.slice(0, 4) : [];
+        // Fetch expenses with timeout
+        const expensesPromise = Promise.race([
+          expenseService.getAll(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Expenses request timeout')), 10000)
+          )
+        ]);
+
+        // Fetch budgets with timeout  
+        const budgetsPromise = Promise.race([
+          budgetService.getAll(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Budgets request timeout')), 10000)
+          )
+        ]);
+
+        const [expenses, budgets] = await Promise.allSettled([expensesPromise, budgetsPromise]);
         
-        // Fetch budget data using getAll method
-        const budgets = await budgetService.getAll();
-        const budgetList = Array.isArray(budgets) ? budgets : [];
+        console.log('API responses:', { expenses, budgets });
+
+        // Handle expenses
+        let recentExpenses = [];
+        if (expenses.status === 'fulfilled' && Array.isArray(expenses.value)) {
+          recentExpenses = expenses.value.slice(0, 4);
+        } else {
+          console.warn('Failed to fetch expenses:', expenses.status === 'rejected' ? expenses.reason : 'Invalid response');
+        }
+
+        // Handle budgets
+        let budgetList = [];
+        if (budgets.status === 'fulfilled' && Array.isArray(budgets.value)) {
+          budgetList = budgets.value;
+        } else {
+          console.warn('Failed to fetch budgets:', budgets.status === 'rejected' ? budgets.reason : 'Invalid response');
+        }
+
         const currentBudget = budgetList.find(b => {
           const budgetMonth = new Date(b.start_date).getMonth();
           const currentMonthNum = new Date().getMonth();
           return budgetMonth === currentMonthNum;
         });
         
-        // Calculate totals - ensure we're working with numbers
+        // Calculate totals with proper number handling
         const totalExpenses = recentExpenses.reduce((sum, expense) => {
-          const amount = typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount) || 0;
+          const amount = Number(expense.amount) || 0;
           return sum + amount;
         }, 0);
         
-        const monthlyBudget = currentBudget ? (typeof currentBudget.amount === 'number' ? currentBudget.amount : parseFloat(currentBudget.amount) || 0) : 0;
+        const monthlyBudget = currentBudget ? (Number(currentBudget.amount) || 0) : 0;
         
         // Calculate category totals
         const categoryTotals: { [key: string]: number } = {};
         recentExpenses.forEach(expense => {
           const categoryName = expense.category?.name || 'Uncategorized';
-          const amount = typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount) || 0;
+          const amount = Number(expense.amount) || 0;
           categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + amount;
         });
         
         const topCategories = Object.entries(categoryTotals)
           .map(([name, amount]) => ({
             name,
-            amount: typeof amount === 'number' ? amount : 0,
+            amount: Number(amount) || 0,
             color: getCategoryColor(name),
             percentage: totalExpenses > 0 ? Math.round((Number(amount) / totalExpenses) * 100) : 0
           }))
@@ -81,21 +116,23 @@ const Dashboard = () => {
           totalExpenses,
           monthlyBudget,
           expensesThisMonth: totalExpenses,
-          lastMonthComparison: 0, // You can implement this based on previous month data
+          lastMonthComparison: 0,
           topCategories,
           recentExpenses: recentExpenses.map(expense => ({
             id: expense.id,
             description: expense.description,
-            amount: typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount) || 0,
+            amount: Number(expense.amount) || 0,
             category: expense.category?.name || 'Uncategorized',
             date: new Date(expense.date).toLocaleDateString(),
             color: getCategoryColor(expense.category?.name || 'Uncategorized')
           }))
         });
+
+        console.log('Dashboard data set successfully');
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast.error('Failed to load dashboard data');
-        // Set empty data on error
+        // Set empty data on error to ensure UI still renders
         setDashboardData({
           totalExpenses: 0,
           monthlyBudget: 0,
@@ -106,12 +143,11 @@ const Dashboard = () => {
         });
       } finally {
         setIsLoading(false);
+        console.log('Dashboard loading completed');
       }
     };
 
-    if (user) {
-      fetchDashboardData();
-    }
+    fetchDashboardData();
   }, [user]);
 
   const getCategoryColor = (categoryName) => {
@@ -142,7 +178,10 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-flux-blue"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-flux-blue mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -339,6 +378,27 @@ const Dashboard = () => {
                   </div>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {dashboardData.totalExpenses === 0 && (
+        <div className="px-6 mb-6">
+          <Card className="rounded-2xl border-gray-200 shadow-2xl">
+            <CardContent className="p-8 text-center">
+              <Receipt className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No expenses yet</h3>
+              <p className="text-gray-600 mb-6">Start tracking your expenses by adding your first one or scanning a receipt.</p>
+              <div className="flex gap-4 justify-center">
+                <Button onClick={handleAddExpense} className="bg-flux-gradient text-white">
+                  Add Expense
+                </Button>
+                <Button onClick={handleScanReceipt} variant="outline">
+                  Scan Receipt
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

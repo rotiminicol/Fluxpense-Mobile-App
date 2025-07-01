@@ -1,161 +1,20 @@
-import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Camera, 
-  Upload, 
-  Mail, 
-  CheckCircle, 
-  Loader2,
-  Edit3,
-  Save,
-  Sparkles
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { realOcrService } from '@/services/realOcrService';
-import { ocrService, CategorySuggestion } from '@/services/ocrService';
-import { expenseService } from '@/services/expenseService';
-import { categoryService } from '@/services/categoryService';
-
-interface ExtractedData {
-  merchant: string;
-  amount: number;
-  date: string;
-  category: string;
-  description: string;
-}
+import { ArrowLeft } from 'lucide-react';
 
 const ScanReceipt = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<ExtractedData | null>(null);
-  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-
-  // Mock categories for demo
-  const categories = [
-    'Food & Dining',
-    'Transportation',
-    'Shopping',
-    'Entertainment',
-    'Healthcare',
-    'Utilities',
-    'Travel',
-    'Education',
-    'Other'
-  ];
-
-  const handleImageUpload = async (file: File) => {
-    setSelectedImage(file);
-    setIsScanning(true);
-    
-    try {
-      console.log('Processing receipt image...');
-      
-      // Use real OCR service
-      const result = await realOcrService.processReceiptImage(file);
-      
-      // Get category suggestions
-      const suggestions = ocrService.getAllCategorySuggestions(result.merchant, result.items);
-      setCategorySuggestions(suggestions);
-      
-      const mockData: ExtractedData = {
-        merchant: result.merchant || 'Unknown Merchant',
-        amount: result.amount || 0,
-        date: result.date || new Date().toISOString().split('T')[0],
-        category: result.category || suggestions[0]?.name || 'Other',
-        description: result.items?.join(', ') || 'Receipt items'
-      };
-      
-      setExtractedData(mockData);
-      setEditData(mockData);
-      setIsScanning(false);
-      toast.success('Receipt scanned successfully!');
-    } catch (error) {
-      console.error('OCR processing failed:', error);
-      setIsScanning(false);
-      toast.error('Failed to scan receipt. Please try again.');
-    }
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        handleImageUpload(file);
-      } else {
-        toast.error('Please select an image file');
-      }
-    }
-  };
-
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleSaveExpense = async () => {
-    if (!editData) return;
-    
-    try {
-      // In a real implementation, you'd get the category_id from your categories
-      const expenseData = {
-        amount: editData.amount,
-        description: editData.description,
-        date: editData.date,
-        category_id: 1, // This should be mapped from category name to ID
-        receipt_url: selectedImage ? URL.createObjectURL(selectedImage) : undefined
-      };
-      
-      await expenseService.create(expenseData);
-      toast.success('Expense saved successfully!');
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Failed to save expense:', error);
-      toast.error('Failed to save expense');
-    }
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditData(extractedData);
-  };
-
-  const handleCategoryChange = (category: string) => {
-    if (editData) {
-      setEditData({ ...editData, category });
-    }
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 bg-white shadow-sm">
+      <div className="flex items-center justify-between p-6 bg-white shadow-lg rounded-b-3xl">
         <Button 
           variant="ghost" 
           size="icon"
           onClick={() => navigate(-1)}
-          className="rounded-full"
+          className="rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-200"
         >
           <ArrowLeft className="w-6 h-6" />
         </Button>
@@ -163,278 +22,81 @@ const ScanReceipt = () => {
         <div className="w-10"></div>
       </div>
 
-      <div className="p-6">
-        {!isScanning && !extractedData && (
-          <div className="space-y-6">
-            {/* Instructions */}
-            <Card className="rounded-2xl border-gray-200 shadow-lg">
-              <CardContent className="p-6 text-center">
-                <div className="w-20 h-20 bg-flux-gradient rounded-3xl flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-10 h-10 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  AI-Powered Receipt Scanning
-                </h2>
-                <p className="text-gray-600 leading-relaxed">
-                  Our advanced OCR technology automatically extracts expense details from your receipts with smart category suggestions.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Scan Options */}
-            <div className="space-y-4">
-              <Button 
-                onClick={triggerFileUpload}
-                className="w-full bg-flux-gradient hover:opacity-90 text-white font-semibold py-6 rounded-2xl text-lg shadow-lg flex items-center justify-center"
-              >
-                <Camera className="w-6 h-6 mr-3" />
-                Take Photo
-              </Button>
-
-              <Button 
-                onClick={triggerFileUpload}
-                variant="outline"
-                className="w-full border-2 border-flux-blue text-flux-blue hover:bg-flux-blue hover:text-white font-semibold py-6 rounded-2xl text-lg flex items-center justify-center"
-              >
-                <Upload className="w-6 h-6 mr-3" />
-                Upload Image
-              </Button>
-
-              <Button 
-                onClick={() => toast.info('Email integration coming soon!')}
-                variant="outline"
-                className="w-full border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-6 rounded-2xl text-lg flex items-center justify-center"
-              >
-                <Mail className="w-6 h-6 mr-3" />
-                Email Receipt
-              </Button>
+      <div className="p-6 space-y-6">
+        {/* AI-Powered Receipt Scanning Card */}
+        <Card className="rounded-2xl border-gray-200 shadow-2xl transform hover:scale-[1.02] transition-all duration-300">
+          <CardContent className="p-6 text-center">
+            <div className="mb-4 animate-pulse-glow">
+              <img 
+                src="/lovable-uploads/5b103922-ab06-4207-98ab-d9a7e512210f.png" 
+                alt="FluxPense Logo" 
+                className="w-16 h-16 mx-auto mb-4 animate-bounce-subtle"
+              />
             </div>
-
-            {/* Tips */}
-            <Card className="rounded-2xl border-gray-200 bg-blue-50">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Tips for better scanning:</h3>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Ensure the receipt is well-lit and flat</li>
-                  <li>• Include the entire receipt in the frame</li>
-                  <li>• Avoid shadows and reflections</li>
-                  <li>• Make sure text is clearly readable</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {isScanning && (
-          <div className="text-center py-12">
-            <div className="w-32 h-32 bg-flux-gradient rounded-3xl flex items-center justify-center mx-auto mb-6 animate-pulse">
-              <Loader2 className="w-16 h-16 text-white animate-spin" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Processing Receipt...
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Our AI is extracting and categorizing your expense data
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">AI-Powered Receipt Scanning</h3>
+            <p className="text-gray-600 text-sm">
+              Take a photo of your receipt and let our AI extract all the details automatically
             </p>
-            <div className="space-y-2 text-sm text-gray-500">
-              <p>✓ Image processed</p>
-              <p>✓ Text extracted</p>
-              <p className="animate-pulse">⏳ Analyzing data...</p>
-            </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
 
-        {extractedData && (
-          <div className="space-y-6">
-            {/* Success Header */}
-            <Card className="rounded-2xl border-green-200 bg-green-50 shadow-lg">
-              <CardContent className="p-6 text-center">
-                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                <h2 className="text-xl font-bold text-gray-900 mb-1">
-                  Receipt Processed Successfully!
-                </h2>
-                <p className="text-gray-600">
-                  Review and edit the extracted details below
-                </p>
-              </CardContent>
-            </Card>
+        {/* Scan Receipt Instructions */}
+        <Card className="rounded-2xl border-gray-200 shadow-2xl transform hover:scale-[1.02] transition-all duration-300">
+          <CardContent className="p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">How to Scan a Receipt</h3>
+            <ul className="list-disc list-inside text-gray-600 text-sm space-y-2">
+              <li>Make sure the receipt is well-lit and the text is clear.</li>
+              <li>Place the receipt on a flat surface with a contrasting background.</li>
+              <li>Position your camera directly above the receipt.</li>
+              <li>Tap the button below to open your camera and take a photo.</li>
+            </ul>
+            <Button className="w-full bg-flux-blue hover:bg-flux-blue/90 text-white font-semibold py-3 rounded-2xl shadow-lg">
+              Open Camera
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Category Suggestions */}
-            {categorySuggestions.length > 0 && (
-              <Card className="rounded-2xl border-blue-200 bg-blue-50 shadow-lg">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <Sparkles className="w-4 h-4 mr-2 text-blue-500" />
-                    Smart Category Suggestions
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {categorySuggestions.slice(0, 3).map((suggestion, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCategoryChange(suggestion.name)}
-                        className={`rounded-full text-xs ${
-                          editData?.category === suggestion.name 
-                            ? 'bg-blue-500 text-white border-blue-500' 
-                            : 'border-blue-300 text-blue-700 hover:bg-blue-100'
-                        }`}
-                      >
-                        {suggestion.name} {suggestion.confidence > 0 && `(${Math.round(suggestion.confidence * 100)}%)`}
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Extracted Data */}
-            <Card className="rounded-2xl border-gray-200 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Expense Details</h3>
-                  {!isEditing ? (
-                    <Button 
-                      onClick={handleEdit}
-                      variant="ghost" 
-                      size="sm"
-                      className="text-flux-blue"
-                    >
-                      <Edit3 className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                  ) : (
-                    <div className="space-x-2">
-                      <Button 
-                        onClick={handleCancelEdit}
-                        variant="ghost" 
-                        size="sm"
-                        className="text-gray-600"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={() => setIsEditing(false)}
-                        size="sm"
-                        className="bg-flux-blue hover:bg-flux-blue/90 text-white"
-                      >
-                        <Save className="w-4 h-4 mr-1" />
-                        Save
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-gray-700 font-medium">Merchant</Label>
-                    {isEditing ? (
-                      <Input
-                        value={editData?.merchant || ''}
-                        onChange={(e) => setEditData(prev => prev ? { ...prev, merchant: e.target.value } : null)}
-                        className="mt-1 rounded-xl"
-                      />
-                    ) : (
-                      <p className="text-gray-900 font-semibold mt-1">{extractedData.merchant}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-700 font-medium">Amount</Label>
-                    {isEditing ? (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={editData?.amount || ''}
-                        onChange={(e) => setEditData(prev => prev ? { ...prev, amount: parseFloat(e.target.value) } : null)}
-                        className="mt-1 rounded-xl"
-                      />
-                    ) : (
-                      <p className="text-gray-900 font-semibold text-2xl mt-1">${extractedData.amount.toFixed(2)}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-700 font-medium">Date</Label>
-                    {isEditing ? (
-                      <Input
-                        type="date"
-                        value={editData?.date || ''}
-                        onChange={(e) => setEditData(prev => prev ? { ...prev, date: e.target.value } : null)}
-                        className="mt-1 rounded-xl"
-                      />
-                    ) : (
-                      <p className="text-gray-900 font-semibold mt-1">{new Date(extractedData.date).toLocaleDateString()}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-700 font-medium">Category</Label>
-                    {isEditing ? (
-                      <Select 
-                        value={editData?.category || ''} 
-                        onValueChange={(value) => setEditData(prev => prev ? { ...prev, category: value } : null)}
-                      >
-                        <SelectTrigger className="mt-1 rounded-xl">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="mt-1">
-                        <span className="category-pill bg-flux-teal/10 text-flux-teal">
-                          {extractedData.category}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-700 font-medium">Description</Label>
-                    {isEditing ? (
-                      <Input
-                        value={editData?.description || ''}
-                        onChange={(e) => setEditData(prev => prev ? { ...prev, description: e.target.value } : null)}
-                        className="mt-1 rounded-xl"
-                      />
-                    ) : (
-                      <p className="text-gray-900 font-semibold mt-1">{extractedData.description}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <Button 
-                onClick={handleSaveExpense}
-                className="w-full bg-flux-gradient hover:opacity-90 text-white font-semibold py-6 rounded-2xl text-lg shadow-lg"
-              >
-                <Save className="w-5 h-5 mr-2" />
-                Save Expense
-              </Button>
-              
-              <Button 
-                onClick={() => {
-                  setExtractedData(null);
-                  setEditData(null);
-                  setIsEditing(false);
-                }}
-                variant="outline"
-                className="w-full border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-6 rounded-2xl text-lg"
-              >
-                Scan Another Receipt
-              </Button>
-            </div>
-          </div>
-        )}
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 shadow-2xl">
+        <div className="max-w-sm mx-auto flex items-center justify-around">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="flex-col text-gray-600 hover:text-flux-blue transition-colors duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up w-5 h-5 mb-1"><path d="m3 6 9 12 5-3 7 8"/><path d="M3 18h22"/><path d="M18 6v6h6"/></svg>
+            <span className="text-xs">Dashboard</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/expenses')}
+            className="flex-col text-gray-600 hover:text-flux-blue transition-colors duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-receipt w-5 h-5 mb-1"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2Z"/><path d="M16 8h-6"/><path d="M16 12h-6"/><path d="M16 16h-6"/></svg>
+            <span className="text-xs">Expenses</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/reports')}
+            className="flex-col text-gray-600 hover:text-flux-blue transition-colors duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pie-chart w-5 h-5 mb-1"><path d="M21.21 15.89A10 10 0 1 1 8 2.79"/><path d="M22 12A10 10 0 0 0 12 2v10h10z"/></svg>
+            <span className="text-xs">Reports</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/profile')}
+            className="flex-col text-gray-600 hover:text-flux-blue transition-colors duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user w-5 h-5 mb-1"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span className="text-xs">Profile</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

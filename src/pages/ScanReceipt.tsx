@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -11,12 +10,17 @@ import {
   CheckCircle, 
   Loader2,
   Edit3,
-  Save
+  Save,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { realOcrService } from '@/services/realOcrService';
+import { ocrService, CategorySuggestion } from '@/services/ocrService';
+import { expenseService } from '@/services/expenseService';
+import { categoryService } from '@/services/categoryService';
 
 interface ExtractedData {
   merchant: string;
@@ -28,10 +32,13 @@ interface ExtractedData {
 
 const ScanReceipt = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<ExtractedData | null>(null);
+  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   // Mock categories for demo
   const categories = [
@@ -42,38 +49,76 @@ const ScanReceipt = () => {
     'Healthcare',
     'Utilities',
     'Travel',
+    'Education',
     'Other'
   ];
 
-  const simulateReceiptScan = () => {
+  const handleImageUpload = async (file: File) => {
+    setSelectedImage(file);
     setIsScanning(true);
     
-    // Simulate AI processing time
-    setTimeout(() => {
+    try {
+      console.log('Processing receipt image...');
+      
+      // Use real OCR service
+      const result = await realOcrService.processReceiptImage(file);
+      
+      // Get category suggestions
+      const suggestions = ocrService.getAllCategorySuggestions(result.merchant, result.items);
+      setCategorySuggestions(suggestions);
+      
       const mockData: ExtractedData = {
-        merchant: 'Starbucks Coffee #1234',
-        amount: 15.75,
-        date: new Date().toISOString().split('T')[0],
-        category: 'Food & Dining',
-        description: 'Grande Latte + Blueberry Muffin'
+        merchant: result.merchant || 'Unknown Merchant',
+        amount: result.amount || 0,
+        date: result.date || new Date().toISOString().split('T')[0],
+        category: result.category || suggestions[0]?.name || 'Other',
+        description: result.items?.join(', ') || 'Receipt items'
       };
       
       setExtractedData(mockData);
       setEditData(mockData);
       setIsScanning(false);
       toast.success('Receipt scanned successfully!');
-    }, 3000);
+    } catch (error) {
+      console.error('OCR processing failed:', error);
+      setIsScanning(false);
+      toast.error('Failed to scan receipt. Please try again.');
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        handleImageUpload(file);
+      } else {
+        toast.error('Please select an image file');
+      }
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSaveExpense = async () => {
     if (!editData) return;
     
     try {
-      // Here you would typically send to your Xano API
-      console.log('Saving expense:', editData);
+      // In a real implementation, you'd get the category_id from your categories
+      const expenseData = {
+        amount: editData.amount,
+        description: editData.description,
+        date: editData.date,
+        category_id: 1, // This should be mapped from category name to ID
+        receipt_url: selectedImage ? URL.createObjectURL(selectedImage) : undefined
+      };
+      
+      await expenseService.create(expenseData);
       toast.success('Expense saved successfully!');
       navigate('/dashboard');
     } catch (error) {
+      console.error('Failed to save expense:', error);
       toast.error('Failed to save expense');
     }
   };
@@ -87,8 +132,23 @@ const ScanReceipt = () => {
     setEditData(extractedData);
   };
 
+  const handleCategoryChange = (category: string) => {
+    if (editData) {
+      setEditData({ ...editData, category });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between p-6 bg-white shadow-sm">
         <Button 
@@ -110,14 +170,13 @@ const ScanReceipt = () => {
             <Card className="rounded-2xl border-gray-200 shadow-lg">
               <CardContent className="p-6 text-center">
                 <div className="w-20 h-20 bg-flux-gradient rounded-3xl flex items-center justify-center mx-auto mb-4">
-                  <Camera className="w-10 h-10 text-white" />
+                  <Sparkles className="w-10 h-10 text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  Smart Receipt Scanning
+                  AI-Powered Receipt Scanning
                 </h2>
                 <p className="text-gray-600 leading-relaxed">
-                  Use AI to automatically extract expense details from your receipts. 
-                  Just take a photo, upload an image, or email your receipt.
+                  Our advanced OCR technology automatically extracts expense details from your receipts with smart category suggestions.
                 </p>
               </CardContent>
             </Card>
@@ -125,7 +184,7 @@ const ScanReceipt = () => {
             {/* Scan Options */}
             <div className="space-y-4">
               <Button 
-                onClick={simulateReceiptScan}
+                onClick={triggerFileUpload}
                 className="w-full bg-flux-gradient hover:opacity-90 text-white font-semibold py-6 rounded-2xl text-lg shadow-lg flex items-center justify-center"
               >
                 <Camera className="w-6 h-6 mr-3" />
@@ -133,7 +192,7 @@ const ScanReceipt = () => {
               </Button>
 
               <Button 
-                onClick={simulateReceiptScan}
+                onClick={triggerFileUpload}
                 variant="outline"
                 className="w-full border-2 border-flux-blue text-flux-blue hover:bg-flux-blue hover:text-white font-semibold py-6 rounded-2xl text-lg flex items-center justify-center"
               >
@@ -172,10 +231,10 @@ const ScanReceipt = () => {
               <Loader2 className="w-16 h-16 text-white animate-spin" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Scanning Receipt...
+              Processing Receipt...
             </h2>
             <p className="text-gray-600 mb-4">
-              Our AI is extracting the details from your receipt
+              Our AI is extracting and categorizing your expense data
             </p>
             <div className="space-y-2 text-sm text-gray-500">
               <p>✓ Image processed</p>
@@ -192,13 +251,42 @@ const ScanReceipt = () => {
               <CardContent className="p-6 text-center">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
                 <h2 className="text-xl font-bold text-gray-900 mb-1">
-                  Receipt Scanned Successfully!
+                  Receipt Processed Successfully!
                 </h2>
                 <p className="text-gray-600">
                   Review and edit the extracted details below
                 </p>
               </CardContent>
             </Card>
+
+            {/* Category Suggestions */}
+            {categorySuggestions.length > 0 && (
+              <Card className="rounded-2xl border-blue-200 bg-blue-50 shadow-lg">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <Sparkles className="w-4 h-4 mr-2 text-blue-500" />
+                    Smart Category Suggestions
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {categorySuggestions.slice(0, 3).map((suggestion, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCategoryChange(suggestion.name)}
+                        className={`rounded-full text-xs ${
+                          editData?.category === suggestion.name 
+                            ? 'bg-blue-500 text-white border-blue-500' 
+                            : 'border-blue-300 text-blue-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        {suggestion.name} {suggestion.confidence > 0 && `(${Math.round(suggestion.confidence * 100)}%)`}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Extracted Data */}
             <Card className="rounded-2xl border-gray-200 shadow-lg">

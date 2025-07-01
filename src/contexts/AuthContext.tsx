@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService, AuthResponse } from '@/services/authService';
 
 interface User {
   id: number;
@@ -8,15 +9,18 @@ interface User {
   account_type: string;
   onboarding_complete: boolean;
   profile_image?: string;
+  created_at?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  authToken: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,13 +35,24 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check for existing session
-    const savedUser = localStorage.getItem('fluxpense_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const savedData = localStorage.getItem('fluxpense_user');
+    if (savedData) {
+      try {
+        const userData = JSON.parse(savedData);
+        setUser(userData.user);
+        setAuthToken(userData.authToken);
+        
+        // Verify token is still valid
+        refreshUser();
+      } catch (error) {
+        console.error('Error parsing saved user data:', error);
+        localStorage.removeItem('fluxpense_user');
+      }
     }
     setIsLoading(false);
   }, []);
@@ -47,21 +62,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // For demo purposes, simulate API call
-      const mockUser: User = {
-        id: 1,
-        name: 'Demo User',
-        email: email,
-        account_type: 'premium',
-        onboarding_complete: false,
-        profile_image: '/lovable-uploads/1b071249-3f59-431d-9d96-a3db71dbf0e1.png'
-      };
+      const response: AuthResponse = await authService.login({ email, password });
       
-      setUser(mockUser);
-      localStorage.setItem('fluxpense_user', JSON.stringify(mockUser));
+      setUser(response.user);
+      setAuthToken(response.authToken);
+      
+      // Save to localStorage
+      localStorage.setItem('fluxpense_user', JSON.stringify(response));
+      
+      console.log('Login successful:', response.user);
     } catch (error) {
       console.error('Login error:', error);
-      throw new Error('Login failed');
+      throw new Error('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -72,35 +84,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // For demo purposes, simulate API call
-      const mockUser: User = {
-        id: 1,
-        name: name,
-        email: email,
-        account_type: 'free',
-        onboarding_complete: false,
-      };
+      const response: AuthResponse = await authService.signup({ name, email, password });
       
-      setUser(mockUser);
-      localStorage.setItem('fluxpense_user', JSON.stringify(mockUser));
+      setUser(response.user);
+      setAuthToken(response.authToken);
+      
+      // Save to localStorage
+      localStorage.setItem('fluxpense_user', JSON.stringify(response));
+      
+      console.log('Signup successful:', response.user);
     } catch (error) {
       console.error('Signup error:', error);
-      throw new Error('Signup failed');
+      throw new Error('Signup failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const refreshUser = async () => {
+    if (!authToken) return;
+    
+    try {
+      const userData = await authService.me();
+      setUser(userData);
+      
+      // Update localStorage
+      const savedData = localStorage.getItem('fluxpense_user');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        data.user = userData;
+        localStorage.setItem('fluxpense_user', JSON.stringify(data));
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      // Token might be invalid, logout user
+      logout();
+    }
+  };
+
   const logout = () => {
     setUser(null);
+    setAuthToken(null);
     localStorage.removeItem('fluxpense_user');
+    console.log('User logged out');
   };
 
   const updateUser = (userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      localStorage.setItem('fluxpense_user', JSON.stringify(updatedUser));
+      
+      // Update localStorage
+      const savedData = localStorage.getItem('fluxpense_user');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        data.user = updatedUser;
+        localStorage.setItem('fluxpense_user', JSON.stringify(data));
+      }
     }
   };
 
@@ -108,10 +148,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{
       user,
       isLoading,
+      authToken,
       login,
       signup,
       logout,
-      updateUser
+      updateUser,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>

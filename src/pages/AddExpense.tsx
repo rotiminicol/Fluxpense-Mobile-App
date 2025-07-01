@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,22 +49,22 @@ const AddExpense = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-ivory to-champagne">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 bg-white shadow-sm">
+      <div className="flex items-center justify-between p-6 bg-ivory shadow-sm">
         <Button 
           variant="ghost" 
           size="icon"
           onClick={() => navigate(-1)}
           className="rounded-full"
         >
-          <ArrowLeft className="w-6 h-6" />
+          <ArrowLeft className="w-6 h-6 text-emerald" />
         </Button>
-        <h1 className="text-xl font-semibold text-gray-900">Add Expense</h1>
+        <h1 className="text-xl font-semibold text-charcoal">Add Expense</h1>
         <Button 
           size="icon"
           onClick={() => navigate('/scan-receipt')}
-          className="bg-flux-gradient hover:opacity-90 text-white rounded-full"
+          className="bg-emerald-champagne-gradient hover:opacity-90 text-ivory rounded-full"
         >
           <Scan className="w-6 h-6" />
         </Button>
@@ -76,11 +75,11 @@ const AddExpense = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Amount */}
           <div className="space-y-2">
-            <Label htmlFor="amount" className="text-gray-700 font-medium">
+            <Label htmlFor="amount" className="text-charcoal font-medium">
               Amount <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">$</span>
+              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-emerald text-lg">$</span>
               <Input
                 id="amount"
                 type="number"
@@ -88,14 +87,14 @@ const AddExpense = () => {
                 placeholder="0.00"
                 value={formData.amount}
                 onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                className="pl-8 py-6 rounded-2xl border-gray-200 focus:border-flux-blue text-2xl font-semibold"
+                className="pl-8 py-6 rounded-2xl border-champagne focus:border-emerald text-2xl font-semibold bg-ivory text-charcoal"
               />
             </div>
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-gray-700 font-medium">
+            <Label htmlFor="description" className="text-charcoal font-medium">
               Description <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -103,20 +102,20 @@ const AddExpense = () => {
               placeholder="What did you buy?"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="py-4 rounded-2xl border-gray-200 focus:border-flux-blue"
+              className="py-4 rounded-2xl border-champagne focus:border-emerald"
             />
           </div>
 
           {/* Category */}
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">
+            <Label className="text-charcoal font-medium">
               Category <span className="text-red-500">*</span>
             </Label>
             <Select 
               value={formData.category} 
               onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
             >
-              <SelectTrigger className="py-4 rounded-2xl border-gray-200 focus:border-flux-blue">
+              <SelectTrigger className="py-4 rounded-2xl border-champagne focus:border-emerald bg-ivory text-charcoal">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
@@ -131,37 +130,37 @@ const AddExpense = () => {
 
           {/* Date */}
           <div className="space-y-2">
-            <Label htmlFor="date" className="text-gray-700 font-medium">Date</Label>
+            <Label htmlFor="date" className="text-charcoal font-medium">Date</Label>
             <Input
               id="date"
               type="date"
               value={formData.date}
               onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              className="py-4 rounded-2xl border-gray-200 focus:border-flux-blue"
+              className="py-4 rounded-2xl border-champagne focus:border-emerald"
             />
           </div>
 
           {/* Merchant */}
           <div className="space-y-2">
-            <Label htmlFor="merchant" className="text-gray-700 font-medium">Merchant</Label>
+            <Label htmlFor="merchant" className="text-charcoal font-medium">Merchant</Label>
             <Input
               id="merchant"
               placeholder="Where did you shop?"
               value={formData.merchant}
               onChange={(e) => setFormData(prev => ({ ...prev, merchant: e.target.value }))}
-              className="py-4 rounded-2xl border-gray-200 focus:border-flux-blue"
+              className="py-4 rounded-2xl border-champagne focus:border-emerald"
             />
           </div>
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-gray-700 font-medium">Notes (Optional)</Label>
+            <Label htmlFor="notes" className="text-charcoal font-medium">Notes (Optional)</Label>
             <Textarea
               id="notes"
               placeholder="Add any additional notes..."
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="rounded-2xl border-gray-200 focus:border-flux-blue resize-none"
+              className="rounded-2xl border-champagne focus:border-emerald resize-none"
               rows={3}
             />
           </div>
@@ -169,7 +168,7 @@ const AddExpense = () => {
           {/* Submit Button */}
           <Button 
             type="submit"
-            className="w-full bg-flux-gradient hover:opacity-90 text-white font-semibold py-6 rounded-2xl text-lg shadow-lg mt-8"
+            className="w-full bg-emerald-champagne-gradient hover:opacity-90 text-ivory font-semibold py-6 rounded-2xl text-lg shadow-lg mt-8"
           >
             <Save className="w-5 h-5 mr-2" />
             Save Expense
@@ -178,11 +177,11 @@ const AddExpense = () => {
 
         {/* Alternative Option */}
         <div className="mt-6 text-center">
-          <p className="text-gray-600 mb-4">Or try our smart scanning feature</p>
+          <p className="text-champagne mb-4">Or try our smart scanning feature</p>
           <Button 
             onClick={() => navigate('/scan-receipt')}
             variant="outline"
-            className="border-2 border-flux-blue text-flux-blue hover:bg-flux-blue hover:text-white font-semibold py-4 px-8 rounded-2xl"
+            className="border-2 border-emerald text-emerald hover:bg-emerald hover:text-ivory font-semibold py-4 px-8 rounded-2xl"
           >
             <Scan className="w-5 h-5 mr-2" />
             Scan Receipt Instead

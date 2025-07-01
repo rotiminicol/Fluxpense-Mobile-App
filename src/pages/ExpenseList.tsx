@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,7 +38,7 @@ const ExpenseList = () => {
   const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
+    <div className="bg-gradient-to-br from-ivory to-champagne min-h-screen pb-20">
       {/* Header */}
       <div className="bg-white shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
@@ -55,7 +54,7 @@ const ExpenseList = () => {
           <Button 
             size="icon"
             onClick={() => navigate('/add-expense')}
-            className="bg-flux-gradient hover:opacity-90 text-white rounded-full"
+            className="bg-emerald-champagne-gradient hover:opacity-90 text-ivory rounded-full"
           >
             <Plus className="w-6 h-6" />
           </Button>
@@ -68,7 +67,7 @@ const ExpenseList = () => {
             placeholder="Search expenses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-3 rounded-2xl border-gray-200 focus:border-flux-blue"
+            className="pl-10 pr-4 py-3 rounded-2xl border-champagne focus:border-emerald text-2xl font-semibold bg-ivory text-charcoal"
           />
         </div>
       </div>
@@ -126,7 +125,7 @@ const ExpenseList = () => {
             </p>
             <Button 
               onClick={() => navigate('/scan-receipt')}
-              className="bg-flux-gradient hover:opacity-90 text-white px-6 py-3 rounded-2xl"
+              className="bg-emerald-champagne-gradient hover:opacity-90 text-ivory px-6 py-3 rounded-2xl"
             >
               Scan Receipt
             </Button>
@@ -149,7 +148,7 @@ const ExpenseList = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            className="flex-col text-flux-blue"
+            className="flex-col text-emerald"
           >
             <Receipt className="w-5 h-5 mb-1" />
             <span className="text-xs">Expenses</span>

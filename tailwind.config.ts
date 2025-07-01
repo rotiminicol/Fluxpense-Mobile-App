@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -67,16 +66,15 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				'flux-blue': '#4F46E5',
-				'flux-teal': '#06B6D4',
-				'flux-green': '#10B981',
-				'flux-purple': '#8B5CF6',
-				'flux-orange': '#F97316',
+				emerald: '#046307',
+				champagne: '#D4BFAA',
+				charcoal: '#1C1C1C',
+				ivory: '#FAF9F6',
 			},
 			backgroundImage: {
-				'flux-gradient': 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 50%, #10B981 100%)',
-				'flux-gradient-dark': 'linear-gradient(135deg, #312E81 0%, #0F172A 50%, #064E3B 100%)',
-				'cosmic': 'radial-gradient(ellipse at center, #1e3a8a 0%, #0f172a 70%)',
+				'emerald-champagne-gradient': 'linear-gradient(135deg, #046307 0%, #D4BFAA 100%)',
+				'charcoal-gradient': 'linear-gradient(135deg, #1C1C1C 0%, #046307 100%)',
+				'cosmic': 'radial-gradient(ellipse at center, #046307 0%, #1C1C1C 70%)',
 			},
 			boxShadow: {
 				'3xl': '0 35px 60px -12px rgba(0, 0, 0, 0.25)',

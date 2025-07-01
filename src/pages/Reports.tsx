@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -58,7 +57,7 @@ const Reports = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            className="flex-col text-flux-blue"
+            className="flex-col text-emerald"
           >
             <PieChart className="w-5 h-5 mb-1" />
             <span className="text-xs">Reports</span>

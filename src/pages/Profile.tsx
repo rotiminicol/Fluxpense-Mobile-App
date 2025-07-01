@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -43,21 +42,21 @@ const Profile = () => {
             <div className="relative inline-block mb-4">
               <Avatar className="w-20 h-20 mx-auto shadow-xl">
                 <AvatarImage src={user?.profile_image} alt={user?.name} />
-                <AvatarFallback className="bg-flux-gradient text-white text-2xl font-bold">
+                <AvatarFallback className="bg-emerald-champagne-gradient text-ivory text-2xl font-bold">
                   {user?.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <Button
                 size="icon"
                 onClick={handleAvatarClick}
-                className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-flux-blue hover:bg-flux-blue/90 shadow-lg transform hover:scale-110 transition-all duration-300"
+                className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-emerald hover:bg-emerald/90 shadow-lg transform hover:scale-110 transition-all duration-300"
               >
                 <Camera className="w-4 h-4" />
               </Button>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-1">{user?.name}</h2>
             <p className="text-gray-600 mb-2">{user?.email}</p>
-            <span className="inline-block px-3 py-1 bg-flux-gradient/10 text-flux-blue rounded-full text-sm font-medium shadow-lg">
+            <span className="inline-block px-3 py-1 bg-emerald-champagne-gradient/10 text-emerald rounded-full text-sm font-medium shadow-lg">
               {user?.account_type} Account
             </span>
           </CardContent>
@@ -92,7 +91,7 @@ const Profile = () => {
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/dashboard')}
-            className="flex-col text-gray-600 hover:text-flux-blue transition-colors duration-200"
+            className="flex-col text-champagne hover:text-emerald transition-colors duration-200"
           >
             <TrendingUp className="w-5 h-5 mb-1" />
             <span className="text-xs">Dashboard</span>
@@ -101,7 +100,7 @@ const Profile = () => {
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/expenses')}
-            className="flex-col text-gray-600 hover:text-flux-blue transition-colors duration-200"
+            className="flex-col text-champagne hover:text-emerald transition-colors duration-200"
           >
             <Receipt className="w-5 h-5 mb-1" />
             <span className="text-xs">Expenses</span>
@@ -110,7 +109,7 @@ const Profile = () => {
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/reports')}
-            className="flex-col text-gray-600 hover:text-flux-blue transition-colors duration-200"
+            className="flex-col text-champagne hover:text-emerald transition-colors duration-200"
           >
             <PieChart className="w-5 h-5 mb-1" />
             <span className="text-xs">Reports</span>
@@ -118,11 +117,11 @@ const Profile = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            className="flex-col text-flux-blue"
+            className="flex-col text-emerald"
           >
             <Avatar className="w-5 h-5 mb-1">
               <AvatarImage src={user?.profile_image} alt={user?.name} />
-              <AvatarFallback className="bg-flux-blue text-white text-xs">
+              <AvatarFallback className="bg-emerald text-ivory text-xs">
                 {user?.name?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>

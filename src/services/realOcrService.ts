@@ -20,7 +20,7 @@ export const realOcrService = {
       const result = this.parseReceiptText(text);
       
       // Add category suggestion
-      const categorysuggestion = ocrService.suggestCategory(result.merchant, result.items);
+      const categorySuggestion = ocrService.suggestCategory(result.merchant, result.items);
       result.category = categorySuggestion.name;
       
       return result;

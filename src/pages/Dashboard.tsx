@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -44,12 +43,6 @@ const Dashboard = () => {
   });
 
   const budgetUsedPercentage = (dashboardData.expensesThisMonth / dashboardData.monthlyBudget) * 100;
-
-  useEffect(() => {
-    if (!user?.onboarding_complete) {
-      navigate('/onboarding');
-    }
-  }, [user, navigate]);
 
   const handleScanReceipt = () => {
     navigate('/scan-receipt');

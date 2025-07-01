@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -47,9 +46,16 @@ const OnboardingScreen = () => {
   };
 
   const handleComplete = () => {
+    // Update user onboarding status first
     updateUser({ onboarding_complete: true });
+    
+    // Show success message
     toast.success('Welcome to FluxPense!');
-    navigate('/dashboard');
+    
+    // Navigate to dashboard with a slight delay to ensure state is updated
+    setTimeout(() => {
+      navigate('/dashboard', { replace: true });
+    }, 100);
   };
 
   const handleSkip = () => {
